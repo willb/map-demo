@@ -1,0 +1,44 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Map visualization</title>
+  <meta name="description" content="map visualization demo">
+
+  <!-- PatternFly Styles -->
+  <link href="bower_components/patternfly/dist/css/patternfly.min.css" rel="stylesheet" media="screen, print">
+  <link href="bower_components/patternfly/dist/css/patternfly-additions.min.css" rel="stylesheet" media="screen, print">
+
+  <!-- <link href="bower_components/leaflet/dist/css/leaflet.css" rel="stylesheet" media="screen, print"> -->
+
+  <!-- jQuery -->
+  <script src="bower_components/jquery/dist/jquery.min.js"></script>
+  <!-- Bootstrap -->
+  <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+  <!-- PatternFly -->
+  <script src="bower_components/patternfly/dist/js/patternfly.min.js"></script>
+
+  
+  <!-- <script src="bower_components/leaflet/dist/js/leaflet.js"></script> -->
+
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" integrity="sha512-07I2e+7D8p6he1SIM+1twR5TIrhUQn9+I6yjqD53JQjFiMf8EtC93ty0/5vJTZGF8aAocvHYNEDJajGdNx1IsQ==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js" integrity="sha512-A7vV8IFfih/D732iSSKi20u/ooOfj/AGehOKq0f4vLT1Zr2Y+RX7C+w8A1gaSasGtRUZpF/NZgzSAu4/Gc41Lg==" crossorigin=""></script>
+
+
+  <script src="bower_components/leaflet-providers/leaflet-providers.js"></script>
+</head>
+
+<body>
+
+  
+
+<div id="mapid" style="width: 1280px; height: 720px;"></div>
+<script>
+  var mymap = L.map('mapid').setView([42.358, -71.060], 11);
+  L.tileLayer.provider('Stamen.Terrain').addTo(mymap);
+</script>
+
+</body>
+</html>
