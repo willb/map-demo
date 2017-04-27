@@ -36,6 +36,7 @@ def polyline(fldf, binfunc=None, binct=5, colors=["#5e3c99", "#b2abd2", "#f7f7f7
     for start, fin, mph in tups:
         bn = binfunc(mph)
         result.append({"color": colors[bn], "points": [list(start), list(fin)]})
+    return result
         
 if __name__ == "__main__":
     spark = SparkSession.builder.master("local[*]").getOrCreate()
