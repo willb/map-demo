@@ -25,24 +25,17 @@ def polyline(fldf, binfunc=None, binct=5, colors=["#5e3c99", "#b2abd2", "#f7f7f7
         bins = zip(list(bins)[1:], range(binct))
         def bf(sample):
             for ceiling, bn in bins:
+                print (sample, ceiling)
                 if sample <= ceiling:
                     return bn
             return bn
         binfunc = bf
-    result = [[]] * binct
+    result = []
     lastbin = None
     
     for start, fin, mph in tups:
         bn = binfunc(mph)
-        if bn == lastbin:
-            result[bn][-1].append(list(start))
-            result[bn][-1].append(list(fin))
-        else:
-            lastbin = bn
-            result[bn].append([list(start)])
-            result[bn][-1].append(list(fin))
-    
-    return [colors, result]
+        result.append({"color": colors[bn], "points": [list(start), list(fin)]})
         
 if __name__ == "__main__":
     spark = SparkSession.builder.master("local[*]").getOrCreate()
