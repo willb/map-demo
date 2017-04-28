@@ -37,7 +37,7 @@ app = Flask(__name__)
 if __name__ == '__main__':
     train_q = Queue()
     result_q = Queue()
-    """
+
     master = environ.get("MAP_MASTER", "local[*]")
     dburl = environ.get("MAP_DBURL", "mongodb://localhost")
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
     # wait for worker to spin up
     result_q.get()
-    """
+
     def sanitize_model(m):
         result = dict([(k, m[k]) for k in ["_id", "name", "urls", "status"]])
         result["id"] = result.pop("_id")
