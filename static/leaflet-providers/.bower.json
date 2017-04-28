@@ -1,0 +1,35 @@
+{
+  "name": "leaflet-providers",
+  "version": "1.1.15",
+  "homepage": "https://github.com/leaflet-extras/leaflet-providers",
+  "description": "An extension to Leaflet that contains configurations for various free tile providers.",
+  "dependencies": {
+    "leaflet": "~0.7.3"
+  },
+  "main": "leaflet-providers.js",
+  "keywords": [
+    "leaflet",
+    "stamen",
+    "osm"
+  ],
+  "license": "BSD-2-Clause",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "preview",
+    "*.html"
+  ],
+  "_release": "1.1.15",
+  "_resolution": {
+    "type": "version",
+    "tag": "1.1.15",
+    "commit": "70a46bd15dc382ca57f1e8cdc64ac20121456814"
+  },
+  "_source": "https://github.com/leaflet-extras/leaflet-providers.git",
+  "_target": "^1.1.15",
+  "_originalSource": "leaflet-providers",
+  "_direct": true
+}

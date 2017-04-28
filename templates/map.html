@@ -1,0 +1,40 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Map visualization</title>
+  <meta name="description" content="map visualization demo">
+
+  <!-- jQuery -->
+  <script src="/static/jquery/dist/jquery.min.js"></script>
+  <!-- Bootstrap -->
+  <script src="/static/bootstrap/dist/js/bootstrap.min.js"></script>
+
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" integrity="sha512-07I2e+7D8p6he1SIM+1twR5TIrhUQn9+I6yjqD53JQjFiMf8EtC93ty0/5vJTZGF8aAocvHYNEDJajGdNx1IsQ==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js" integrity="sha512-A7vV8IFfih/D732iSSKi20u/ooOfj/AGehOKq0f4vLT1Zr2Y+RX7C+w8A1gaSasGtRUZpF/NZgzSAu4/Gc41Lg==" crossorigin=""></script>
+
+
+  <script src="/static/leaflet-providers/leaflet-providers.js"></script>
+</head>
+
+<body>
+
+<div id="mapid" style="width: 1280px; height: 720px;"></div>
+<script>
+  var mymap = L.map('mapid').setView([42.35, -71.180], 12);
+  L.tileLayer.provider('Stamen.Terrain').addTo(mymap);
+
+  var speeds = {{ speeds|safe }} ; 
+
+  for(i = 0; i < speeds.length; i++) {
+		 cl = speeds[i].color;
+		 points = speeds[i].points;
+		 L.polyline(points, {"color": cl, "weight": 6}).addTo(mymap);
+  }
+  
+</script>
+
+</body>
+</html>
