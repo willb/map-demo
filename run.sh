@@ -24,4 +24,4 @@ fi
 export MAP_DBURL=$MAP_MONGO_URL
 export MAP_MASTER=$MAP_SPARK_MASTER_URL
 
-exec spark-submit --master $MAP_MASTER --py-files pymongo.zip,worker.py --jars aws-java-sdk-1.7.4.jar,hadoop-aws-2.7.2.jar ./app.py
+exec spark-submit --master $MAP_MASTER --py-files pymongo.zip,worker.py ./app.py
