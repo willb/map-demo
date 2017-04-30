@@ -100,6 +100,9 @@ def prime(dirname, inq, db):
 def workloop(master, inq, outq, dburl):
     spark = SparkSession.builder.master(master).getOrCreate()
     sc = spark.sparkContext
+
+    logger = sc._jvm.org.apache.log4j
+    logger.LogManager.getLogger("org"). setLevel( logger.Level.ERROR )
     
     if dburl is not None:
         db = pymongo.MongoClient(dburl).mapdemo
