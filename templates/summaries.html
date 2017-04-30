@@ -1,0 +1,24 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Summaries</title>
+  <meta name="description" content="map visualization demo">
+
+  <!-- jQuery -->
+  <script src="/static/jquery/dist/jquery.min.js"></script>
+  <!-- Bootstrap -->
+  <script src="/static/bootstrap/dist/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+  <ul>
+    {% for item in results %}
+    <li>{{ item["name"] }} ({{ item["status"] }}): <a href="{{ item["mapurl"] }}">map</a> and <a href="{{ item["summaryurl"] }}">summary</a>.</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
