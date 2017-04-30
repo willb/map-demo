@@ -69,7 +69,12 @@ if __name__ == '__main__':
     def create_or_list_summaries():
         if request.method == 'GET':
             dburl = options()["db_url"]
-            return jsonify([{"name": s["name"], "id": s["_id"], "status": s["status"]} for s in pymongo.MongoClient(dburl).mapdemo.summaries.find()])
+            results = pymongo.MongoClient(dburl).mapdemo.summaries.find()
+            if request.args.has_key("json"):
+                return jsonify([{"name": s["name"], "id": s["_id"], "status": s["status"]} for s in results])
+            else:
+                postprocessed = [{"name": s["name"], "status": s["status"], "mapurl": url_for("render_map", mapid=s["_id"]), "summaryurl": url_for("get_summary", mapid=s["_id"])} for s in results]
+                return render_template("summaries.html", results=postprocessed)
         else:
             job = {"url": request.form['url'], "_id": uuid4(),
                    "name": request.form['name'], "status": "training"}
