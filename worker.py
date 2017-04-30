@@ -55,7 +55,6 @@ def polyline(fldf, binfunc=None, binct=5, colors=["#5e3c99", "#b2abd2", "#f7f7f7
         bins = zip(list(bins)[1:], range(binct))
         def bf(sample):
             for ceiling, bn in bins:
-                print (sample, ceiling)
                 if sample <= ceiling:
                     return bn
             return bn
