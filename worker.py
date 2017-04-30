@@ -1,11 +1,10 @@
-from pyspark import SparkConf
-from pyspark import SparkContext
-from pyspark.mllib.feature import Word2Vec
+from pyspark import SparkSession
 
 from functools import reduce
 import re
 import urllib2
 import zlib
+
 
 from numpy import ndarray
 import pymongo
@@ -18,31 +17,81 @@ def cleanstr(s):
     return collapsedWhitespace
 
 
-def url2rdd(sc, url):
+def url2df(spark, url):
+    sc = spark.sparkContext
     if url.startswith("http") or url.startswith("ftp"):
         response = urllib2.urlopen(url)
-        corpus = response.read()
-        text = corpus.replace("\\r", "\r").replace("\\n", "\n")
-        rdd = sc.parallelize(text.split("\r\n\r\n"))
+        text = response.read()
+        rdd = sc.parallelize(text.split("\n"))
     else:
         rdd = sc.textFile(url)
 
-    rdd.map(lambda l: l.replace("\r\n", " ").split(" "))
-    return rdd.map(lambda l: cleanstr(l).split(" "))
+    return spark.read.json(rdd)
+
+def convertGarmin(df):
+    """ Converts a garmin-style record (i.e., speed in m/s, UNIX timestamps in ms)
+        to the style we'd like """
+    return df.select(df["timestamp"], (floor(df["timestamp"] / 1000 / 60) * 60).alias("minute"), ((df["speed"] * 60 * 60) / 1600).alias("mph"), df["latlong.lat"], df["latlong.lon"])
+
+def convertObd(df):
+    """ Prepares Mike's OBD records for summarization """
+    df = df.withColumn("timestamp", unix_timestamp(df["timestamp"] * 1000))
+    return df.select(df["timestamp"], (floor(df["timestamp"] / 1000 / 60) * 60).alias("minute"), df["speed"].alias("mph"), df["latitude"].alias("lat"), df["longitude"].alias("lon"))
 
 
-def train(sc, urls):
-    w2v = Word2Vec()
-    rdds = reduce(lambda a, b: a.union(b), [url2rdd(sc, url) for url in urls])
-    return w2v.fit(rdds)
+def firstAndLast(withMinutes):
+    aggs = withMinutes.select(withMinutes["timestamp"], withMinutes["minute"], withMinutes["mph"]).groupBy("minute").agg(min(column("timestamp")).alias("minTs"), max(column("timestamp")).alias("maxTs"), max(column("mph")).alias("maxMph"))
+    
+    fl = withMinutes.join(aggs, (withMinutes.minute == aggs.minute) & ((withMinutes.timestamp == aggs.minTs) | (withMinutes.timestamp == aggs.maxTs))).select(withMinutes.minute, "maxMph", "lat", "lon", when(column("timestamp") == column("maxTs"), "last").otherwise("first").alias("position")).cache()
+    
+    firsts = fl.filter(fl.position == "first").select(fl.minute, fl.maxMph, fl.lat.alias("firstLat"), fl.lon.alias("firstLon"))
+    lasts = fl.filter(fl.position == "last").select(fl.minute, fl.lat.alias("lastLat"), fl.lon.alias("lastLon"))
+    
+    return firsts.join(lasts, firsts.minute == lasts.minute).select(firsts.minute, firsts.maxMph, "firstLat", "firstLon", "lastLat", "lastLon")
 
+
+
+def polyline(fldf, binfunc=None, binct=5, colors=["#5e3c99", "#b2abd2", "#f7f7f7", "#fdb863", "#e66101"]):
+    import numpy
+    
+    tups = [((f.firstLat, f.firstLon), (f.lastLat, f.lastLon), f.maxMph) for f in fldf.orderBy("minute").collect()]
+    if binfunc is None:
+        cts,bins = numpy.histogram([tup[2] for tup in tups], bins=binct)
+        bins = zip(list(bins)[1:], range(binct))
+        def bf(sample):
+            for ceiling, bn in bins:
+                print (sample, ceiling)
+                if sample <= ceiling:
+                    return bn
+            return bn
+        binfunc = bf
+    result = []
+    lastbin = None
+    
+    for start, fin, mph in tups:
+        bn = binfunc(mph)
+        result.append({"color": colors[bn], "points": [list(start), list(fin)]})
+    return result
+
+
+
+def train(spark, url):
+    original = url2df(spark, url)
+    df = None
+    if 'vin' in original.columns:
+        df = convertObd(original)
+    else:
+        df = convertGarmin(original)
+    
+    result = polyline(firstAndLast(df))
+    
 
 def workloop(master, inq, outq, dburl):
-    sconf = SparkConf().setAppName("map-demo").setMaster(master)
-    sc = SparkContext(conf=sconf)
-
+    spark = SparkSession.builder.master(master).getOrCreate()
+    sc = spark.sparkContext
+    
     if dburl is not None:
-        db = pymongo.MongoClient(dburl).ophicleide
+        db = pymongo.MongoClient(dburl).mapdemo
 
     outq.put("ready")
 
