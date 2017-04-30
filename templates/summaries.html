@@ -15,10 +15,20 @@
 
 <body>
 
+  <h3>Trip summaries</h3>
+  
   <ul>
     {% for item in results %}
     <li>{{ item["name"] }} ({{ item["status"] }}): <a href="{{ item["mapurl"] }}">map</a> and <a href="{{ item["summaryurl"] }}">summary</a>.</li>
     {% endfor %}
   </ul>
+
+  <h3>Add a new summary</h3>
+  
+  <form action="{{ summaries_url }}" method="post">
+    Trip name:  <input type="text" name="name"/><br/>
+    URL:  <input type="text" name="url"/><br/>
+    <input type="submit" value="Submit">
+  </form>
 </body>
 </html>

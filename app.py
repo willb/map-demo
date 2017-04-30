@@ -74,18 +74,13 @@ if __name__ == '__main__':
                 return jsonify([{"name": s["name"], "id": s["_id"], "status": s["status"]} for s in results])
             else:
                 postprocessed = [{"name": s["name"], "status": s["status"], "mapurl": url_for("render_map", mapid=s["_id"]), "summaryurl": url_for("get_summary", mapid=s["_id"])} for s in results]
-                return render_template("summaries.html", results=postprocessed)
+                return render_template("summaries.html", results=postprocessed, summaries_url=url_for("create_or_list_summaries"))
         else:
             job = {"url": request.form['url'], "_id": uuid4(),
                    "name": request.form['name'], "status": "training"}
             (model_collection()).insert_one(job)
             options()["train_queue"].put(job)
-            location = url_for("get_summary", name="name")
-            response = jsonify(sanitize_model(job))
-            response.status_code = 201
-            response.headers.add("Location", location)
-
-            return response
+            return redirect(url_for("create_or_list_summaries"), code=302)
 
     @app.route("/summaries/<mapid>", methods=['GET'])
     def get_summary(mapid):
