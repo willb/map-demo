@@ -32,6 +32,7 @@ from flask import Flask, render_template, url_for, request, make_response, redir
 from flask.json import jsonify
 
 import pymongo
+import json
 
 from uuid import uuid4, UUID
 
@@ -82,9 +83,11 @@ if __name__ == '__main__':
             return response
 
     @app.route("/summaries/<mapid>", methods=['GET'])
-    def get_summary():
+    def get_summary(mapid):
         model = model_collection().find_one({"_id": UUID(mapid)})
-        return "\n".join([",".join(row) for row in model["summary"]])
+        response = make_response("timestamp,startlat,startlon,endlat,endlon,maxmph\n" + "\n".join([",".join([str(r) for r in row]) for row in model["summary"]]))
+        response.mimetype = "text/plain"
+        return response
     
     @app.route("/maps/<mapid>")
     def render_map(mapid):
@@ -94,6 +97,6 @@ if __name__ == '__main__':
         model = model_collection().find_one({"_id": UUID(mapid)})
         if model is None:
             return json_error("Not Found", 404, "can't find summary with ID %r" % mapid, 404)
-        return render_template("map.html", speeds=model["polyline"])
+        return render_template("map.html", speeds=json.dumps(model["polyline"]))
 
     app.run(port=8080, host='0.0.0.0')
