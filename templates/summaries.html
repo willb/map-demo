@@ -11,24 +11,41 @@
   <script src="/static/jquery/dist/jquery.min.js"></script>
   <!-- Bootstrap -->
   <script src="/static/bootstrap/dist/js/bootstrap.min.js"></script>
+
+  <link rel="stylesheet" href="/static/bootstrap/dist/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="/static/bootstrap/dist/css/bootstrap-theme.min.css"/>
+  <link rel="stylesheet" href="/static/jumbotron-narrow.css"/>
+
 </head>
 
 <body>
-
-  <h3>Trip summaries</h3>
+  <div class="container">
+    <nav></nav>
+    <div class="jumbotron">
+      <h3>Add a new summary</h3>
+      
+      <form action="{{ summaries_url }}" method="post">
+	Trip name:  <input type="text" name="name"/> &middot; URL:  <input type="text" name="url"/> &middot; <input type="submit" value="Submit"/>
+      </form>
+    </div>
+      
+    <div class="row marketing">
+      <h3>Trip summaries</h3>
   
-  <ul>
-    {% for item in results %}
-    <li>{{ item["name"] }} ({{ item["status"] }}): <a href="{{ item["mapurl"] }}">map</a> and <a href="{{ item["summaryurl"] }}">summary</a>.</li>
-    {% endfor %}
-  </ul>
+      <ul>
+	{% for item in results %}
+	<li>{{ item["name"] }} ({{ item["status"] }}){% if item["status"] == "ready" %}: <a href="{{ item["mapurl"] }}">map</a> and <a href="{{ item["summaryurl"] }}">summary</a>{% endif %}.</li>
+	{% endfor %}
+      </ul>      
+    </div>
 
-  <h3>Add a new summary</h3>
-  
-  <form action="{{ summaries_url }}" method="post">
-    Trip name:  <input type="text" name="name"/><br/>
-    URL:  <input type="text" name="url"/><br/>
-    <input type="submit" value="Submit">
-  </form>
+    <div class="row"></div>
+    <div class="row"></div>
+    <div class="row"></div>
+    
+    <footer class="footer">
+      <p>Made possible by <a href="http://radanalytics.io">radanalytics.io</a>.</p>
+    </footer>
+  </div>
 </body>
 </html>
