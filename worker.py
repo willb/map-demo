@@ -1,21 +1,14 @@
-from pyspark import SparkSession
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
 
 from functools import reduce
 import re
 import urllib2
-import zlib
 
-
-from numpy import ndarray
 import pymongo
 from bson.binary import Binary
 
-
-def cleanstr(s):
-    noPunct = re.sub("[^a-z ]", " ", s.lower())
-    collapsedWhitespace = re.sub("(^ )|( $)", "", re.sub("  *", " ", noPunct))
-    return collapsedWhitespace
-
+from uuid import uuid4, UUID
 
 def url2df(spark, url):
     sc = spark.sparkContext
@@ -28,15 +21,17 @@ def url2df(spark, url):
 
     return spark.read.json(rdd)
 
+
 def convertGarmin(df):
     """ Converts a garmin-style record (i.e., speed in m/s, UNIX timestamps in ms)
         to the style we'd like """
     return df.select(df["timestamp"], (floor(df["timestamp"] / 1000 / 60) * 60).alias("minute"), ((df["speed"] * 60 * 60) / 1600).alias("mph"), df["latlong.lat"], df["latlong.lon"])
 
+
 def convertObd(df):
     """ Prepares Mike's OBD records for summarization """
-    df = df.withColumn("timestamp", unix_timestamp(df["timestamp"] * 1000))
-    return df.select(df["timestamp"], (floor(df["timestamp"] / 1000 / 60) * 60).alias("minute"), df["speed"].alias("mph"), df["latitude"].alias("lat"), df["longitude"].alias("lon"))
+    df = df.withColumn("timestamp", unix_timestamp(df["timestamp"]) * 1000)
+    return df.select(df["timestamp"], (floor(df["timestamp"] / 1000 / 60) * 60).alias("minute"), df["speed"].cast("double").alias("mph"), df["latitude"].cast("double").alias("lat"), df["longitude"].cast("double").alias("lon"))
 
 
 def firstAndLast(withMinutes):
@@ -74,17 +69,34 @@ def polyline(fldf, binfunc=None, binct=5, colors=["#5e3c99", "#b2abd2", "#f7f7f7
     return result
 
 
-
 def train(spark, url):
+    """ returns summary data and JSON polyline """
     original = url2df(spark, url)
     df = None
     if 'vin' in original.columns:
         df = convertObd(original)
     else:
         df = convertGarmin(original)
+
+    faldf = firstAndLast(df)
+    summary = faldf.rdd.map(lambda r: [long(r.minute), float(r.firstLat), float(r.firstLon), float(r.lastLat), float(r.lastLon), float(r.maxMph)]).collect()
+
+    return (summary, polyline(faldf))
     
-    result = polyline(firstAndLast(df))
+
+
+def prime(dirname, inq, db):
+    """ sets up summaries for existing data """
+    import glob, os, os.path
+
+    print("priming db with data from %s/%s" % (os.getcwd(), dirname))
     
+    for js in glob.glob(os.getcwd() + "/%s/*.json" % dirname):
+        print(js)
+        job = {"url": js, "_id": uuid4(),
+               "name": os.path.basename(js), "status": "training"}
+        db.summaries.insert_one(job)
+        inq.put(job)
 
 def workloop(master, inq, outq, dburl):
     spark = SparkSession.builder.master(master).getOrCreate()
@@ -93,33 +105,24 @@ def workloop(master, inq, outq, dburl):
     if dburl is not None:
         db = pymongo.MongoClient(dburl).mapdemo
 
+    prime("static", inq, db)
+    
     outq.put("ready")
 
     while True:
         job = inq.get()
-        urls = job["urls"]
+        url = job["url"]
         mid = job["_id"]
-        model = train(sc, urls)
-
-        items = model.getVectors().items()
-        words, vecs = zip(*[(w, list(v)) for w, v in items])
+        summary, polyline = train(spark, url)
 
         # XXX: do something with callback here
-
+        print("processing job for %s" % url)
+        
         if dburl is not None:
-            ndvecs = ndarray([len(words), len(vecs[0])])
-            for i in range(len(vecs)):
-                ndvecs[i] = vecs[i]
-
-            ns = ndvecs.dumps()
-            zns = zlib.compress(ns, 9)
-
-            print("len(ns) == %d; len(zns) == %d" % (len(ns), len(zns)))
-
-            db.models.update_one(
+            db.summaries.update_one(
                 {"_id": mid},
                 {"$set": {"status": "ready",
-                          "model": {"words": list(words), "zndvecs": Binary(zns)}},
+                          "polyline": polyline, "summary": summary},
                  "$currentDate": {"last_updated": True}}
             )
 
