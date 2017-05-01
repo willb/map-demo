@@ -13,6 +13,12 @@ RUN yum install -y python-pip \
 
 ADD . /opt/map-demo/
 
+EXPOSE 8080
+
+LABEL io.k8s.description="Spark map demo." \
+      io.k8s.display-name="Spark map demo." \
+      io.openshift.expose-services="8080:http"
+
 USER 185
 
 CMD ./run.sh
