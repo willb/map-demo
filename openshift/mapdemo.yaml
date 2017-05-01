@@ -119,15 +119,6 @@ objects:
     test: false
     triggers:
     - type: ConfigChange
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - mapserver
-        from:
-          kind: ImageStreamTag
-          name: mapserver:latest
-          namespace: map
-      type: ImageChange
   status:
     availableReplicas: 0
     latestVersion: 0
@@ -225,15 +216,6 @@ objects:
           name: mongodb-data
     test: false
     triggers:
-    - imageChangeParams:
-        automatic: true
-        containerNames:
-        - mongodb
-        from:
-          kind: ImageStreamTag
-          name: mongodb:3.2
-          namespace: openshift
-      type: ImageChange
     - type: ConfigChange
   status:
     availableReplicas: 0
