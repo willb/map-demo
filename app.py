@@ -62,7 +62,7 @@ if __name__ == '__main__':
         result["id"] = result.pop("_id")
         return result
     
-    @app.route("/live"):
+    @app.route("/live")
     def live():
         response = None
         try:
