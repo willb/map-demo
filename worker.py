@@ -90,6 +90,16 @@ def prime(dirname, inq, db):
 
     print("priming db with data from %s/%s" % (os.getcwd(), dirname))
     
+    ready = False
+    
+    while not ready:
+        try: 
+            db.summaries.find()
+            ready = True
+        except Exception, e:
+            time.sleep(2)
+            pass
+    
     for js in glob.glob(os.getcwd() + "/%s/*.json" % dirname):
         print(js)
         job = {"url": js, "_id": uuid4(),
@@ -115,17 +125,24 @@ def workloop(master, inq, outq, dburl):
         job = inq.get()
         url = job["url"]
         mid = job["_id"]
-        summary, polyline = train(spark, url)
 
-        # XXX: do something with callback here
-        print("processing job for %s" % url)
+        try:
+            summary, polyline = train(spark, url)
+
+            # XXX: do something with callback here
+            print("processing job for %s" % url)
         
-        if dburl is not None:
+            if dburl is not None:
+                db.summaries.update_one(
+                    {"_id": mid},
+                    {"$set": {"status": "ready",
+                              "polyline": polyline, "summary": summary},
+                              "$currentDate": {"last_updated": True}}
+                              )
+
+            outq.put((mid, job["name"]))
+        except Exception, e:
             db.summaries.update_one(
                 {"_id": mid},
-                {"$set": {"status": "ready",
-                          "polyline": polyline, "summary": summary},
-                 "$currentDate": {"last_updated": True}}
-            )
-
-        outq.put((mid, job["name"]))
+                {"$set": {"status": "failed"}})
+            
